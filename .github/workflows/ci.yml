@@ -8,7 +8,6 @@ on:
   pull_request:
     branches:
       - main
-      - feature/*
   workflow_dispatch:
 
 env:
@@ -45,6 +44,7 @@ jobs:
         uses: actions/setup-go@v5.1.0
         with:
           go-version: ${{ env.GO_VERSION }}
+
 
       - name: Run linter
         uses: golangci/golangci-lint-action@v6
