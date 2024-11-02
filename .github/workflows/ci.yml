@@ -14,11 +14,10 @@ on:
 env:
   GO_VERSION: 1.23.2
   GOLANGCI_LINT_VERSION: v1.60
-  VM_IMAGE: ubuntu-latest
 
 jobs:
   build-test:
-    runs-on: ${{ env.VM_IMAGE }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -34,7 +33,7 @@ jobs:
         run:  go test -v -coverprofile c.out ./...
 
   lint-format:
-    runs-on:  ${{ env.VM_IMAGE }}
+    runs-on:  ubuntu-latest
     steps:
       - name: Set up Go
         uses: actions/setup-go@v5.1.0
