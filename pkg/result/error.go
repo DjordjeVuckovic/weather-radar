@@ -1,55 +1,42 @@
-package results
+package result
 
 import (
 	"net/http"
 	"time"
 )
 
-type ErrType string
+type ErrTitle string
 
 const (
-	Validation   ErrType = "Validation result"
-	NotFound     ErrType = "Not Found"
-	Conflict     ErrType = "Conflict"
-	UnAuthorized ErrType = "UnAuthorized"
+	Validation   ErrTitle = "Validation result"
+	NotFound     ErrTitle = "Not Found"
+	Conflict     ErrTitle = "Conflict"
+	UnAuthorized ErrTitle = "UnAuthorized"
 )
 
 type Problem struct {
-	Code      int       `response:"code"`
-	Title     string    `response:"title"`
-	Detail    string    `response:"detail"`
-	TimeStamp time.Time `response:"timeStamp"`
-	Type      ErrType   `response:"type"`
+	Status    int       `json:"code"`
+	Title     ErrTitle  `json:"title"`
+	Detail    string    `json:"detail"`
+	TimeStamp time.Time `json:"timeStamp"`
+	Type      string    `json:"type"`
 }
 
 func (e *Problem) Error() string {
-	return e.Title
+	return e.Detail
 }
 
-func NewErr(code int, title string, detail string) *Problem {
+func NewErr(status int, detail string) *Problem {
 	return &Problem{
-		Code:      code,
-		Title:     title,
+		Status:    status,
+		Title:     getErrTitle(status),
 		Detail:    detail,
+		Type:      getErrType(status),
 		TimeStamp: time.Now(),
-		Type:      CreateErrType(code),
 	}
 }
 
-func NewErrTyped(code int, title string, detail string, errType ErrType) *Problem {
-	if errType == "" {
-		errType = CreateErrType(code)
-	}
-	return &Problem{
-		Code:      code,
-		Title:     title,
-		Detail:    detail,
-		TimeStamp: time.Now(),
-		Type:      errType,
-	}
-}
-
-func CreateErrType(code int) ErrType {
+func getErrTitle(code int) ErrTitle {
 	switch code {
 	case http.StatusBadRequest:
 		return Validation
@@ -63,10 +50,24 @@ func CreateErrType(code int) ErrType {
 	return "Internal Server Error"
 }
 
-func ValidationError(title string, detail string) *Problem {
-	return NewErrTyped(400, title, detail, Validation)
+func getErrType(code int) string {
+	switch code {
+	case http.StatusBadRequest:
+		return "https://tools.ietf.org/html/rfc7807#section-3.1"
+	case http.StatusUnauthorized:
+		return "https://tools.ietf.org/html/rfc7235#section-3.1"
+	case http.StatusNotFound:
+		return "https://tools.ietf.org/html/rfc7231#section-6.5.4"
+	case http.StatusConflict:
+		return "https://tools.ietf.org/html/rfc7231#section-6.5.8"
+	}
+	return "https://tools.ietf.org/html/rfc7231#section-6.6.1"
 }
 
-func NotFoundError(title string, detail string) *Problem {
-	return NewErrTyped(400, title, detail, NotFound)
+func ValidationErr(detail string) *Problem {
+	return NewErr(http.StatusBadRequest, detail)
+}
+
+func NotFoundErr(detail string) *Problem {
+	return NewErr(http.StatusNotFound, detail)
 }

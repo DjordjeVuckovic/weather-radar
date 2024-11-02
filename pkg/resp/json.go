@@ -1,4 +1,4 @@
-package response
+package resp
 
 import (
 	"encoding/json"
@@ -14,6 +14,6 @@ func WriteJSON(w http.ResponseWriter, code int, body interface{}) error {
 
 func WriteProblemJSON(w http.ResponseWriter, p *results.Problem) error {
 	w.Header().Set("Content-Type", "application/problem+json")
-	w.WriteHeader(p.Code)
+	w.WriteHeader(p.Status)
 	return json.NewEncoder(w).Encode(p)
 }

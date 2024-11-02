@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"errors"
-	"github.com/DjordjeVuckovic/weather-radar/pkg/response"
-	results "github.com/DjordjeVuckovic/weather-radar/pkg/result"
+	"github.com/DjordjeVuckovic/weather-radar/pkg/resp"
+	"github.com/DjordjeVuckovic/weather-radar/pkg/result"
 	"log/slog"
 	"net/http"
 	"os"
@@ -19,7 +19,7 @@ type Server struct {
 	gracefulShutdownTimeout time.Duration
 }
 
-type OptFunc func(*Server)
+type Option func(*Server)
 
 type HandlerFunc func(http.ResponseWriter, *http.Request) error
 
@@ -29,7 +29,7 @@ const (
 	defaultGracefulShutdownTimeout = 10 * time.Second
 )
 
-func NewServer(listenAddr string, opts ...OptFunc) *Server {
+func NewServer(listenAddr string, opts ...Option) *Server {
 	server := &Server{
 		listenAddr:              listenAddr,
 		mux:                     http.NewServeMux(),
@@ -38,10 +38,11 @@ func NewServer(listenAddr string, opts ...OptFunc) *Server {
 	for _, opt := range opts {
 		opt(server)
 	}
+	server.setupHealthCheck()
 	return server
 }
 
-func WithGracefulShutdownTimeout(d time.Duration) OptFunc {
+func WithGracefulShutdownTimeout(d time.Duration) Option {
 	return func(s *Server) {
 		s.gracefulShutdownTimeout = d
 	}
@@ -64,10 +65,10 @@ func (s *Server) Start() error {
 	defer cancel()
 
 	if err := s.shutdown(ctx); err != nil {
-		slog.Error("shutting down the server")
+		slog.Error("Shutting down the server")
 		return err
 	}
-	slog.Info("shutdown server...")
+	slog.Info("Shutdown server...")
 
 	return nil
 }
@@ -76,37 +77,78 @@ func (s *Server) Use(mw ...MiddlewareFunc) {
 	s.middleware = append(s.middleware, mw...)
 }
 
-func (s *Server) HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) {
+func (s *Server) HandleFunc(pattern string, h func(http.ResponseWriter, *http.Request)) {
 
 	s.mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-		handler(w, r)
+		h(w, r)
 	})
 }
 
-func (s *Server) handle(pattern string, handler HandlerFunc, mw ...MiddlewareFunc) {
-	s.mux.HandleFunc(pattern, s.wrapMiddleware(handler, mw...))
+func (s *Server) GET(route string, h HandlerFunc, mw ...MiddlewareFunc) {
+	s.handle(http.MethodGet, route, h, mw...)
 }
 
-func (s *Server) wrapMiddleware(handler HandlerFunc, mw ...MiddlewareFunc) http.HandlerFunc {
+func (s *Server) POST(route string, h HandlerFunc, mw ...MiddlewareFunc) {
+	s.handle(http.MethodPost, route, h, mw...)
+}
+
+func (s *Server) PUT(route string, h HandlerFunc, mw ...MiddlewareFunc) {
+	s.handle(http.MethodPut, route, h, mw...)
+}
+
+func (s *Server) DELETE(route string, h HandlerFunc, mw ...MiddlewareFunc) {
+	s.handle(http.MethodDelete, route, h, mw...)
+}
+
+func (s *Server) PATCH(route string, h HandlerFunc, mw ...MiddlewareFunc) {
+	s.handle(http.MethodPatch, route, h, mw...)
+}
+
+func (s *Server) OPTIONS(route string, h HandlerFunc, mw ...MiddlewareFunc) {
+	s.handle(http.MethodOptions, route, h, mw...)
+}
+
+func (s *Server) HEAD(route string, h HandlerFunc, mw ...MiddlewareFunc) {
+	s.handle(http.MethodHead, route, h, mw...)
+}
+
+func (s *Server) TRACE(route string, h HandlerFunc, mw ...MiddlewareFunc) {
+	s.handle(http.MethodTrace, route, h, mw...)
+}
+
+func (s *Server) handle(method, route string, h HandlerFunc, mw ...MiddlewareFunc) {
+	pattern := method + " " + normalizePathSlash(route)
+	s.mux.HandleFunc(pattern, s.wrapMiddleware(h, mw...))
+}
+
+func (s *Server) wrapMiddleware(h HandlerFunc, mw ...MiddlewareFunc) http.HandlerFunc {
 	mws := append(s.middleware, mw...)
+
 	for i := len(mws) - 1; i >= 0; i-- {
-		handler = s.middleware[i](handler)
+		h = mws[i](h)
 	}
 
-	return handleError(handler)
+	return handleError(h)
 }
 
-func (s *Server) UseHealthCheck() {
-	s.handle("/healthz", func(w http.ResponseWriter, r *http.Request) error {
-		err := response.WriteJSON(w, http.StatusOK, "OK")
+func (s *Server) SetupNotFoundHandler() {
+	s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		slog.Error("Route not found", "path", r.URL.Path)
+		http.NotFound(w, r)
+	})
+}
+
+func (s *Server) setupHealthCheck() {
+	s.GET("/healthz", func(w http.ResponseWriter, r *http.Request) error {
+		err := resp.WriteJSON(w, http.StatusOK, "OK")
 		if err != nil {
 			return err
 		}
 		return nil
 	})
 
-	s.handle("/ready", func(w http.ResponseWriter, r *http.Request) error {
-		err := response.WriteJSON(w, http.StatusOK, "OK")
+	s.GET("/ready", func(w http.ResponseWriter, r *http.Request) error {
+		err := resp.WriteJSON(w, http.StatusOK, "OK")
 		if err != nil {
 			return err
 		}
@@ -118,34 +160,35 @@ func (s *Server) shutdown(ctx context.Context) error {
 	return nil
 }
 
-func handleError(handler HandlerFunc) http.HandlerFunc {
+func handleError(h HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		err := handler(w, r)
-		var problem *results.Problem
+		err := h(w, r)
+		var problem *result.Problem
 		ok := errors.As(err, &problem)
 		if !ok {
-			_ = response.WriteProblemJSON(
-				w,
-				results.NewErr(
-					http.StatusInternalServerError,
-					"internal server error",
-					err.Error(),
-				),
-			)
+			if err != nil {
+				_ = resp.WriteProblemJSON(
+					w,
+					result.NewErr(
+						http.StatusInternalServerError,
+						err.Error(),
+					),
+				)
+			}
 			return
 		}
 		if problem != nil {
-			switch problem.Code {
+			switch problem.Status {
 			case http.StatusNotFound:
-				_ = response.WriteProblemJSON(w, problem)
+				_ = resp.WriteProblemJSON(w, problem)
 			case http.StatusBadRequest:
-				_ = response.WriteProblemJSON(w, problem)
+				_ = resp.WriteProblemJSON(w, problem)
 			case http.StatusConflict:
-				_ = response.WriteProblemJSON(w, problem)
+				_ = resp.WriteProblemJSON(w, problem)
 			case http.StatusUnauthorized:
-				_ = response.WriteProblemJSON(w, problem)
+				_ = resp.WriteProblemJSON(w, problem)
 			default:
-				_ = response.WriteProblemJSON(w, problem)
+				_ = resp.WriteProblemJSON(w, problem)
 			}
 		}
 	}
