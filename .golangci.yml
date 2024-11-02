@@ -1,0 +1,10 @@
+linters:
+  disable:
+    - unused
+
+run:
+  timeout: 10m
+
+linters-settings:
+  errcheck:
+    check-blank: false
