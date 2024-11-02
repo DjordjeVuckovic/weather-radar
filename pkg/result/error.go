@@ -2,37 +2,34 @@ package result
 
 import (
 	"net/http"
-	"time"
 )
 
 type ErrTitle string
 
 const (
-	Validation   ErrTitle = "Validation result"
+	Validation   ErrTitle = "Validation problem"
 	NotFound     ErrTitle = "Not Found"
 	Conflict     ErrTitle = "Conflict"
-	UnAuthorized ErrTitle = "UnAuthorized"
+	UnAuthorized ErrTitle = "Unauthorized"
 )
 
-type Problem struct {
-	Status    int       `json:"code"`
-	Title     ErrTitle  `json:"title"`
-	Detail    string    `json:"detail"`
-	TimeStamp time.Time `json:"timeStamp"`
-	Type      string    `json:"type"`
+type Err struct {
+	Status int      `json:"code"`
+	Title  ErrTitle `json:"title"`
+	Detail string   `json:"detail"`
+	Type   string   `json:"type"`
 }
 
-func (e *Problem) Error() string {
+func (e *Err) Error() string {
 	return e.Detail
 }
 
-func NewErr(status int, detail string) *Problem {
-	return &Problem{
-		Status:    status,
-		Title:     getErrTitle(status),
-		Detail:    detail,
-		Type:      getErrType(status),
-		TimeStamp: time.Now(),
+func NewErr(status int, detail string) *Err {
+	return &Err{
+		Status: status,
+		Title:  getErrTitle(status),
+		Detail: detail,
+		Type:   getErrType(status),
 	}
 }
 
@@ -64,10 +61,14 @@ func getErrType(code int) string {
 	return "https://tools.ietf.org/html/rfc7231#section-6.6.1"
 }
 
-func ValidationErr(detail string) *Problem {
+func ValidationErr(detail string) *Err {
 	return NewErr(http.StatusBadRequest, detail)
 }
 
-func NotFoundErr(detail string) *Problem {
+func NotFoundErr(detail string) *Err {
 	return NewErr(http.StatusNotFound, detail)
+}
+
+func InternalServerErr(detail string) *Err {
+	return NewErr(http.StatusInternalServerError, detail)
 }

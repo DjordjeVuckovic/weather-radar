@@ -10,10 +10,12 @@ import (
 )
 
 type Env struct {
-	Environment   string
-	CorsOrigins   string
-	WeatherUrl    string
-	WeatherApiKey string
+	ENV               string
+	CorsOrigins       string
+	WeatherUrl        string
+	WeatherApiKey     string
+	OpenWeatherUrl    string
+	OpenWeatherApiKey string
 }
 
 func Load() Env {
@@ -26,9 +28,9 @@ func Load() Env {
 		origins = []string{"*"}
 	}
 
-	wUrl := os.Getenv("WEATHER_URL")
+	wUrl := os.Getenv("WEATHER_API_URL")
 	if wUrl == "" {
-		panic("WEATHER_URL is required")
+		panic("WEATHER_API_URL is required")
 	}
 
 	wApiKey := os.Getenv("WEATHER_API_KEY")
@@ -36,10 +38,22 @@ func Load() Env {
 		panic("WEATHER_API_KEY is required")
 	}
 
+	owUrl := os.Getenv("OPEN_WEATHER_API_URL")
+	if owUrl == "" {
+		panic("OPEN_WEATHER_API_URL is required")
+	}
+
+	owApiKey := os.Getenv("OPEN_WEATHER_API_KEY")
+	if owApiKey == "" {
+		panic("OPEN_WEATHER_API_KEY is required")
+	}
+
 	return Env{
-		Environment:   os.Getenv("ENVIRONMENT"),
-		CorsOrigins:   strings.Join(origins, ","),
-		WeatherUrl:    wUrl,
-		WeatherApiKey: wApiKey,
+		ENV:               os.Getenv("ENV"),
+		CorsOrigins:       strings.Join(origins, ","),
+		WeatherUrl:        wUrl,
+		WeatherApiKey:     wApiKey,
+		OpenWeatherUrl:    owUrl,
+		OpenWeatherApiKey: owApiKey,
 	}
 }

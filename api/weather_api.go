@@ -10,14 +10,16 @@ import (
 )
 
 type WeatherApi struct {
-	server *server.Server
-	wCl    client.WeatherClient
+	server  *server.Server
+	wCl     client.WeatherClient
+	astroCl client.AstroClient
 }
 
-func BindWeatherApi(s *server.Server, wCl client.WeatherClient) {
+func BindWeatherApi(s *server.Server, wCl client.WeatherClient, cl client.AstroClient) {
 	api := &WeatherApi{
-		server: s,
-		wCl:    wCl,
+		server:  s,
+		wCl:     wCl,
+		astroCl: cl,
 	}
 
 	s.GET("/api/v1/weather", api.handleWeatherByCity)
@@ -29,7 +31,7 @@ func BindWeatherApi(s *server.Server, wCl client.WeatherClient) {
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} dto.PokerRoomDto
-// @Failure 404 {object} result.Problem
+// @Failure 404 {object} result.Err
 // @Router /api/v1/weather?city="" [get]
 func (api *WeatherApi) handleWeatherByCity(w http.ResponseWriter, r *http.Request) error {
 	city := r.URL.Query().Get("city")
@@ -37,7 +39,7 @@ func (api *WeatherApi) handleWeatherByCity(w http.ResponseWriter, r *http.Reques
 		return result.ValidationErr("City query param is required")
 	}
 
-	weather, err := usecase.WeatherByCityQuery(r.Context(), api.wCl, city)
+	weather, err := usecase.WeatherByCityQuery(r.Context(), api.wCl, api.astroCl, city)
 
 	if err != nil {
 		return err

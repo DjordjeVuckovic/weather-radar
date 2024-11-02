@@ -25,10 +25,16 @@ func main() {
 	s.Use(middleware.Logger())
 	s.Use(middleware.Recover())
 	s.Use(middleware.CORS(middleware.Config{Origin: cgf.CorsOrigins}))
-	s.Use(middleware.Example())
 
-	wCl := client.NewAPIWeatherClient(cgf.WeatherApiKey, cgf.WeatherUrl)
-	api2.BindWeatherApi(s, wCl)
+	wCl := client.NewWeatherAPIClient(
+		cgf.WeatherUrl,
+		cgf.WeatherApiKey,
+	)
+	astroCl := client.NewAstroAPIClient(
+		cgf.OpenWeatherUrl,
+		cgf.OpenWeatherApiKey,
+	)
+	api2.BindWeatherApi(s, wCl, astroCl)
 
 	s.SetupNotFoundHandler()
 

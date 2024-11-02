@@ -6,10 +6,10 @@ import (
 	"net/http"
 )
 
-func Example() server.MiddlewareFunc {
+func Test() server.MiddlewareFunc {
 	return func(next server.HandlerFunc) server.HandlerFunc {
 		return func(writer http.ResponseWriter, request *http.Request) error {
-			log.Println("Example middleware")
+			log.Println("Test middleware")
 			return next(writer, request)
 		}
 	}

@@ -12,7 +12,7 @@ func WriteJSON(w http.ResponseWriter, code int, body interface{}) error {
 	return json.NewEncoder(w).Encode(body)
 }
 
-func WriteProblemJSON(w http.ResponseWriter, p *results.Problem) error {
+func WriteProblemJSON(w http.ResponseWriter, p *results.Err) error {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(p.Status)
 	return json.NewEncoder(w).Encode(p)

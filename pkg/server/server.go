@@ -163,7 +163,7 @@ func (s *Server) shutdown(ctx context.Context) error {
 func handleError(h HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := h(w, r)
-		var problem *result.Problem
+		var problem *result.Err
 		ok := errors.As(err, &problem)
 		if !ok {
 			if err != nil {
