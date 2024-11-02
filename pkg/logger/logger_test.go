@@ -32,7 +32,7 @@ func TestInitSlog(t *testing.T) {
 			var buf bytes.Buffer
 			done := make(chan struct{})
 			go func() {
-				io.Copy(&buf, reader)
+				_, _ = io.Copy(&buf, reader)
 				close(done)
 			}()
 
@@ -42,7 +42,7 @@ func TestInitSlog(t *testing.T) {
 			slog.Warn("warn message")
 			slog.Error("error message")
 
-			writer.Close()
+			_ = writer.Close()
 			<-done
 
 			output := buf.String()
