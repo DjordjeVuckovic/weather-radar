@@ -1,7 +1,6 @@
 linters:
   disable:
     - unused
-    - deadcode
 
 run:
   timeout: 10m
