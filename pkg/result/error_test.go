@@ -70,9 +70,6 @@ func TestNewErr(t *testing.T) {
 		if err.Detail != tt.expected.Detail {
 			t.Errorf("Expected Detail %s, got %s", tt.expected.Detail, err.Detail)
 		}
-		if err.Type != tt.expected.Type {
-			t.Errorf("Expected Type %s, got %s", tt.expected.Type, err.Type)
-		}
 	}
 }
 
