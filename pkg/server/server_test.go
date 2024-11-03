@@ -77,7 +77,7 @@ func TestServerWrapMiddlewareOrder(t *testing.T) {
 		}
 	})
 
-	req := httptest.NewRequest("GET", "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rec := httptest.NewRecorder()
 
 	s.mux.ServeHTTP(rec, req)
@@ -94,7 +94,7 @@ func TestServerNotFoundHandler(t *testing.T) {
 	s := NewServer(":1312")
 	s.SetupNotFoundHandler()
 
-	req := httptest.NewRequest("GET", "/non-existent", nil)
+	req := httptest.NewRequest(http.MethodGet, "/non-existent", nil)
 	rec := httptest.NewRecorder()
 
 	s.mux.ServeHTTP(rec, req)
@@ -118,12 +118,12 @@ func TestServerMethodHandling(t *testing.T) {
 		path     string
 		expected int
 	}{
-		{"GET", "/get", http.StatusOK},
-		{"POST", "/post", http.StatusOK},
-		{"PUT", "/put", http.StatusOK},
-		{"DELETE", "/delete", http.StatusOK},
-		{"PATCH", "/patch", http.StatusOK},
-		{"PATCH", "/non-existent", http.StatusNotFound},
+		{http.MethodGet, "/get", http.StatusOK},
+		{http.MethodPost, "/post", http.StatusOK},
+		{http.MethodPut, "/put", http.StatusOK},
+		{http.MethodDelete, "/delete", http.StatusOK},
+		{http.MethodPatch, "/patch", http.StatusOK},
+		{http.MethodPatch, "/non-existent", http.StatusNotFound},
 	}
 
 	for _, test := range tests {

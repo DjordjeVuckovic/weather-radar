@@ -1,5 +1,11 @@
 linters:
-  enable-all: true
+  enable:
+    - cyclop
+    - errcheck
+    - gofmt
+    - goimports
+    - golint
+    - gosec
   disable:
     - unused
 
@@ -7,5 +13,11 @@ run:
   timeout: 10m
 
 linters-settings:
+  gosec:
+    severity: high
+  cyclop:
+    max-complexity: 10
   errcheck:
     check-blank: false
+  gofmt:
+    simplify: false
