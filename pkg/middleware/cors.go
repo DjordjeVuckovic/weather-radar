@@ -5,11 +5,11 @@ import (
 	"net/http"
 )
 
-type Config struct {
+type CORSConfig struct {
 	Origin string
 }
 
-func CORS(c Config) server.MiddlewareFunc {
+func CORS(c CORSConfig) server.MiddlewareFunc {
 	return func(next server.HandlerFunc) server.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) error {
 			w.Header().Set("Access-Control-Allow-Origin", c.Origin)

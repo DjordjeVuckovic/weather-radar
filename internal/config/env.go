@@ -11,6 +11,7 @@ import (
 
 type Env struct {
 	ENV         string
+	Port        string
 	CorsOrigins string
 
 	WeatherUrl    string
@@ -27,6 +28,12 @@ func Load() Env {
 	if err := godotenv.Load(); err != nil {
 		slog.Info("Skipping .config file ...")
 	}
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "80"
+	}
+
 	origin := os.Getenv("CORS_ORIGINS")
 	origins := strings.Split(origin, ",")
 	if len(origins) == 0 {
@@ -63,6 +70,7 @@ func Load() Env {
 	return Env{
 		ENV:               os.Getenv("ENV"),
 		CorsOrigins:       strings.Join(origins, ","),
+		Port:              port,
 		WeatherUrl:        wUrl,
 		WeatherApiKey:     wApiKey,
 		OpenWeatherUrl:    owUrl,

@@ -6,7 +6,7 @@ import (
 	"github.com/DjordjeVuckovic/weather-radar/docs"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/resp"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/result"
-	"github.com/swaggo/http-swagger"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"log/slog"
 	"net/http"
 	"os"
@@ -15,10 +15,13 @@ import (
 )
 
 type Server struct {
-	listenAddr              string
-	mux                     *http.ServeMux
-	middleware              []MiddlewareFunc
+	listenAddr string
+	mux        *http.ServeMux
+	httpServer *http.Server
+	middleware []MiddlewareFunc
+
 	gracefulShutdownTimeout time.Duration
+	ShutdownSig             chan struct{}
 }
 
 type Option func(*Server)
@@ -32,18 +35,23 @@ const (
 )
 
 func NewServer(listenAddr string, opts ...Option) *Server {
+	mux := http.NewServeMux()
+	s := &http.Server{
+		Addr:    listenAddr,
+		Handler: mux,
+	}
+
 	server := &Server{
 		listenAddr:              listenAddr,
-		mux:                     http.NewServeMux(),
+		mux:                     mux,
 		gracefulShutdownTimeout: defaultGracefulShutdownTimeout,
+		httpServer:              s,
+		ShutdownSig:             make(chan struct{}),
 	}
 
 	for _, opt := range opts {
 		opt(server)
 	}
-
-	server.setupHealthCheck()
-	server.setupSwagger()
 
 	return server
 }
@@ -59,7 +67,7 @@ func (s *Server) Start() error {
 	defer stop()
 
 	go func() {
-		if err := http.ListenAndServe(s.listenAddr, s.mux); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slog.Error("shutting down the server")
 		}
 	}()
@@ -67,10 +75,12 @@ func (s *Server) Start() error {
 
 	<-ctx.Done()
 
+	close(s.ShutdownSig)
+
 	ctx, cancel := context.WithTimeout(context.Background(), s.gracefulShutdownTimeout)
 	defer cancel()
 
-	if err := s.shutdown(ctx); err != nil {
+	if err := s.httpServer.Shutdown(ctx); err != nil {
 		slog.Error("Shutting down the server")
 		return err
 	}
@@ -118,8 +128,18 @@ func (s *Server) HEAD(route string, h HandlerFunc, mw ...MiddlewareFunc) {
 	s.handle(http.MethodHead, route, h, mw...)
 }
 
-func (s *Server) TRACE(route string, h HandlerFunc, mw ...MiddlewareFunc) {
-	s.handle(http.MethodTrace, route, h, mw...)
+func (s *Server) SetupNotFoundHandler() {
+	s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		slog.Warn("Route not found", "path", r.URL.Path)
+		http.NotFound(w, r)
+	})
+}
+
+func (s *Server) SetupSwagger() {
+	docs.SwaggerInfo.Title = "Weather Radar"
+	docs.SwaggerInfo.Description = "Weather Radar API"
+	docs.SwaggerInfo.Version = "1.0"
+	s.mux.Handle("/swagger-ui/", httpSwagger.WrapHandler)
 }
 
 func (s *Server) handle(method, route string, h HandlerFunc, mw ...MiddlewareFunc) {
@@ -135,42 +155,6 @@ func (s *Server) wrapMiddleware(h HandlerFunc, mw ...MiddlewareFunc) http.Handle
 	}
 
 	return handleError(h)
-}
-
-func (s *Server) SetupNotFoundHandler() {
-	s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		slog.Warn("Route not found", "path", r.URL.Path)
-		http.NotFound(w, r)
-	})
-}
-
-func (s *Server) setupHealthCheck() {
-	s.GET("/healthz", func(w http.ResponseWriter, r *http.Request) error {
-		err := resp.WriteJSON(w, http.StatusOK, "OK")
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-
-	s.GET("/ready", func(w http.ResponseWriter, r *http.Request) error {
-		err := resp.WriteJSON(w, http.StatusOK, "OK")
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-}
-
-func (s *Server) setupSwagger() {
-	docs.SwaggerInfo.Title = "Weather Radar"
-	docs.SwaggerInfo.Description = "Weather Radar API"
-	docs.SwaggerInfo.Version = "1.0"
-	s.mux.Handle("/swagger-ui/", httpSwagger.WrapHandler)
-}
-
-func (s *Server) shutdown(ctx context.Context) error {
-	return nil
 }
 
 func handleError(h HandlerFunc) http.HandlerFunc {

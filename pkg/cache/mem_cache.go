@@ -110,6 +110,7 @@ func (c *InMemCache) cleanup() {
 	c.items.Range(func(key, value interface{}) bool {
 		item := value.(InMemItem)
 		if item.TTL > 0 && now > item.TTL {
+			slog.Debug("Deleting item due to TTL expiration", slog.String("cache_key", key.(string)))
 			c.Delete(key.(string))
 		}
 		return true
@@ -117,7 +118,6 @@ func (c *InMemCache) cleanup() {
 }
 
 func (c *InMemCache) startEvictionLoop(interval time.Duration) {
-	slog.Debug("Starting eviction loop ...")
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -147,7 +147,7 @@ func (c *InMemCache) evict() {
 }
 
 func (c *InMemCache) evictLRU() {
-	slog.Debug("Evicting LRU ...")
+	slog.Debug("Started evicting LRU...")
 	oldestKey := ""
 	oldestAccessTime := time.Now().UnixNano()
 

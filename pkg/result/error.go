@@ -84,3 +84,7 @@ func TimeoutErr() *Err {
 func UnauthorizedErr(detail string) error {
 	return NewErr(http.StatusUnauthorized, detail)
 }
+
+func TooManyRequests(s string) error {
+	return NewErr(http.StatusTooManyRequests, s)
+}

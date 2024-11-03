@@ -68,7 +68,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/weather/feedback": {
+        "/api/v1/weather/feedback": {
             "post": {
                 "security": [
                     {
@@ -118,19 +118,59 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/healthz": {
+            "get": {
+                "description": "This endpoint returns the health status of the application.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Health check endpoint",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/ready": {
+            "get": {
+                "description": "This endpoint returns the readiness status of the application.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Readiness check endpoint",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
         "dto.WeatherFeedbackReq": {
             "type": "object",
             "properties": {
-                "Message": {
-                    "type": "string"
-                },
                 "city": {
                     "type": "string"
                 },
                 "date": {
+                    "type": "string"
+                },
+                "message": {
                     "type": "string"
                 }
             }

@@ -1,11 +1,11 @@
 definitions:
   dto.WeatherFeedbackReq:
     properties:
-      Message:
-        type: string
       city:
         type: string
       date:
+        type: string
+      message:
         type: string
     type: object
   dto.WeatherFeedbackResp:
@@ -142,7 +142,7 @@ paths:
       summary: Get weather by city
       tags:
       - weather
-  /v1/weather/feedback:
+  /api/v1/weather/feedback:
     post:
       consumes:
       - application/json
@@ -174,4 +174,30 @@ paths:
       summary: Submit weather feedback
       tags:
       - weather
+  /healthz:
+    get:
+      description: This endpoint returns the health status of the application.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Health check endpoint
+      tags:
+      - health
+  /ready:
+    get:
+      description: This endpoint returns the readiness status of the application.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Readiness check endpoint
+      tags:
+      - health
 swagger: "2.0"

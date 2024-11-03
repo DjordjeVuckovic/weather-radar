@@ -2,10 +2,11 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/DjordjeVuckovic/weather-radar/internal/cache"
 	"github.com/DjordjeVuckovic/weather-radar/internal/dto"
 	"github.com/DjordjeVuckovic/weather-radar/internal/model"
 	"github.com/DjordjeVuckovic/weather-radar/internal/service"
+	"github.com/DjordjeVuckovic/weather-radar/pkg/cache"
+	"github.com/DjordjeVuckovic/weather-radar/pkg/middleware"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/resp"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/result"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/server"
@@ -37,8 +38,11 @@ func BindWeatherApi(
 		authService:    authService,
 		cache:          c,
 	}
-
-	s.GET("/api/v1/weather", api.handleWeatherByCity)
+	limiter := middleware.NewFixedWindowLimiter(middleware.FixedWindowLimiterConfig{
+		Window:      1 * time.Minute,
+		MaxRequests: 10,
+	})
+	s.GET("/api/v1/weather", api.handleWeatherByCity, middleware.RateLimit(limiter))
 	s.POST("api/v1/weather/feedback", api.handleWeatherFeedback)
 }
 
@@ -86,7 +90,7 @@ func (api *WeatherApi) handleWeatherByCity(w http.ResponseWriter, r *http.Reques
 // @Success 200 {object} dto.WeatherFeedbackResp
 // @Failure 400 {object} result.Err "Invalid request data"
 // @Failure 401 {object} result.Err "Unauthorized"
-// @Router /v1/weather/feedback [post]
+// @Router /api/v1/weather/feedback [post]
 // @Security BasicAuth
 func (api *WeatherApi) handleWeatherFeedback(w http.ResponseWriter, r *http.Request) error {
 	username, password, ok := r.BasicAuth()

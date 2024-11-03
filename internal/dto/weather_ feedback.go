@@ -7,5 +7,5 @@ type WeatherFeedbackResp struct {
 type WeatherFeedbackReq struct {
 	Date    string `json:"date"`
 	City    string `json:"city"`
-	Message string `json:"Message"`
+	Message string `json:"message"`
 }
