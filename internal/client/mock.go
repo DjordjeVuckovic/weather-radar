@@ -71,6 +71,6 @@ func NewMockAstroClient(err error) *MockAstroClient {
 	}
 }
 
-func (m *MockAstroClient) GetByCity(ctx context.Context, city string) (*dto.AstroByCity, error) {
+func (m *MockAstroClient) GetByCity(_ context.Context, _ string) (*dto.AstroByCity, error) {
 	return m.Response, m.Error
 }

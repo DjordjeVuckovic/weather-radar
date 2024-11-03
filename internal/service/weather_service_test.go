@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/DjordjeVuckovic/weather-radar/internal/client"
+	"github.com/DjordjeVuckovic/weather-radar/internal/dto"
+	"github.com/DjordjeVuckovic/weather-radar/internal/storage"
 	"testing"
 	"time"
 )
@@ -12,7 +14,7 @@ func TestGetWeatherByCity_Success(t *testing.T) {
 	weatherMock := client.NewMockWeatherClient(nil, 0)
 	astroMock := client.NewMockAstroClient(nil)
 
-	service := NewWeatherService(weatherMock, astroMock)
+	service := NewWeatherService(weatherMock, astroMock, storage.NewWeatherInMemStorage())
 	ctx := context.Background()
 
 	city := "London"
@@ -34,7 +36,7 @@ func TestGetWeatherByCity_WeatherClientError(t *testing.T) {
 	weatherMock := client.NewMockWeatherClient(errors.New(errMsg), 0)
 	astroMock := client.NewMockAstroClient(errors.New(errMsg))
 
-	service := NewWeatherService(weatherMock, astroMock)
+	service := NewWeatherService(weatherMock, astroMock, storage.NewWeatherInMemStorage())
 	ctx := context.Background()
 
 	weather, err := service.GetWeatherByCity(ctx, "London")
@@ -51,7 +53,7 @@ func TestGetWeatherByCity_Timeout(t *testing.T) {
 	weatherMock := client.NewMockWeatherClient(nil, 10*time.Millisecond)
 	astroMock := client.NewMockAstroClient(nil)
 
-	service := NewWeatherService(weatherMock, astroMock)
+	service := NewWeatherService(weatherMock, astroMock, storage.NewWeatherInMemStorage())
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	defer cancel()
 
@@ -62,5 +64,20 @@ func TestGetWeatherByCity_Timeout(t *testing.T) {
 	}
 	if weather != nil {
 		t.Fatal("Expected nil weather response due to timeout")
+	}
+}
+
+func TestWeatherService_SubmitFeedback(t *testing.T) {
+	st := storage.NewWeatherInMemStorage()
+	service := NewWeatherService(nil, nil, st)
+
+	feedback := &dto.WeatherFeedbackReq{
+		City:    "London",
+		Date:    "2024-10-27",
+		Message: "It was raining",
+	}
+	err := service.SubmitFeedback(context.Background(), feedback)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
 	}
 }
