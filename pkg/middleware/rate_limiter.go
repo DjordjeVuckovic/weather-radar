@@ -36,7 +36,7 @@ func RateLimit(limiter Limiter) server.MiddlewareFunc {
 			w.Header().Set("X-RateLimit-Reset", strconv.FormatInt(limit.Reset.Unix(), 10))
 
 			if limit.Exceeded {
-				return result.TooManyRequests("Rate limit exceeded")
+				http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 			}
 
 			return next(w, r)

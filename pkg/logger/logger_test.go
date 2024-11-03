@@ -2,6 +2,7 @@ package logger
 
 import (
 	"bytes"
+	"github.com/DjordjeVuckovic/weather-radar/pkg/util"
 	"io"
 	"log/slog"
 	"os"
@@ -46,17 +47,12 @@ func TestInitSlog(t *testing.T) {
 			<-done
 
 			output := buf.String()
-			if tt.config.Handler == Json && !isJSONFormat(output) {
+			if tt.config.Handler == Json && !util.IsJSONFormat(output) {
 				t.Errorf("Expected JSON format, got text format for %s", tt.name)
 			}
-			if tt.config.Handler == Text && isJSONFormat(output) {
+			if tt.config.Handler == Text && util.IsJSONFormat(output) {
 				t.Errorf("Expected text format, got JSON format for %s", tt.name)
 			}
 		})
 	}
-}
-
-// Helper function to check if the output is in JSON format
-func isJSONFormat(output string) bool {
-	return len(output) > 0 && output[0] == '{'
 }

@@ -81,10 +81,6 @@ func TimeoutErr() *Err {
 	return NewErr(http.StatusGatewayTimeout, "request timeout")
 }
 
-func UnauthorizedErr(detail string) error {
+func UnauthorizedErr(detail string) *Err {
 	return NewErr(http.StatusUnauthorized, detail)
-}
-
-func TooManyRequests(s string) error {
-	return NewErr(http.StatusTooManyRequests, s)
 }

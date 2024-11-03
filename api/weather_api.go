@@ -105,8 +105,8 @@ func (api *WeatherApi) handleWeatherFeedback(w http.ResponseWriter, r *http.Requ
 	if err := json.NewDecoder(r.Body).Decode(&feedback); err != nil {
 		return result.ValidationErr("Invalid request data")
 	}
-
-	if err := api.weatherService.SubmitFeedback(feedback); err != nil {
+	ctx := r.Context()
+	if err := api.weatherService.SubmitFeedback(ctx, &feedback); err != nil {
 		return err
 	}
 

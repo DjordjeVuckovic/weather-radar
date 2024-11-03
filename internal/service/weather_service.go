@@ -5,7 +5,7 @@ import (
 	"github.com/DjordjeVuckovic/weather-radar/internal/client"
 	"github.com/DjordjeVuckovic/weather-radar/internal/dto"
 	"github.com/DjordjeVuckovic/weather-radar/internal/model"
-	"github.com/DjordjeVuckovic/weather-radar/pkg/result"
+	"github.com/DjordjeVuckovic/weather-radar/internal/storage"
 	"time"
 )
 
@@ -14,12 +14,14 @@ const timeout = 1 * time.Second
 type WeatherService struct {
 	weatherClient client.WeatherClient
 	astroClient   client.AstroClient
+	storage       storage.WeatherStorage
 }
 
-func NewWeatherService(wCl client.WeatherClient, aCl client.AstroClient) *WeatherService {
+func NewWeatherService(wCl client.WeatherClient, aCl client.AstroClient, st storage.WeatherStorage) *WeatherService {
 	return &WeatherService{
 		weatherClient: wCl,
 		astroClient:   aCl,
+		storage:       st,
 	}
 }
 
@@ -62,7 +64,7 @@ func (w *WeatherService) GetWeatherByCity(ctx context.Context, city string) (*mo
 		case err := <-errCh:
 			return nil, err
 		case <-timeoutCtx.Done():
-			return nil, result.TimeoutErr()
+			return nil, context.DeadlineExceeded
 		}
 	}
 
@@ -70,7 +72,10 @@ func (w *WeatherService) GetWeatherByCity(ctx context.Context, city string) (*mo
 	return weather, nil
 }
 
-func (w *WeatherService) SubmitFeedback(feedback dto.WeatherFeedbackReq) error {
-	//TODO: Submit feedback to the database
+func (w *WeatherService) SubmitFeedback(ctx context.Context, feedback *dto.WeatherFeedbackReq) error {
+	fb := model.NewFeedbackFromDto(feedback)
+	if err := w.storage.AddFeedback(ctx, fb); err != nil {
+		return err
+	}
 	return nil
 }

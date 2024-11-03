@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"runtime"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -26,26 +25,39 @@ type InMemItem struct {
 type InMemCache struct {
 	items sync.Map
 
-	stopCh  chan struct{}
-	stopped int32
+	stopCh chan struct{}
 
 	evictPolicy     EvictPolicy
 	evictInterval   time.Duration
 	memoryThreshold float64
 }
 
-func NewInMemCache(cleanupInterval time.Duration, evictPolicy EvictPolicy) *InMemCache {
+type InMemCacheOption func(*InMemCache)
+
+func NewInMemCache(cleanupInterval time.Duration, evictPolicy EvictPolicy, opt ...InMemCacheOption) *InMemCache {
 	c := &InMemCache{
 		stopCh:          make(chan struct{}),
 		evictPolicy:     evictPolicy,
 		evictInterval:   defaultEvictInterval,
 		memoryThreshold: defaultMemoryThreshold,
 	}
+
+	for _, o := range opt {
+		o(c)
+	}
+
 	go c.startCleanupLoop(cleanupInterval)
 	if evictPolicy != EvictNO {
 		go c.startEvictionLoop(c.evictInterval)
 	}
+
 	return c
+}
+
+func WithEvictInterval(interval time.Duration) InMemCacheOption {
+	return func(c *InMemCache) {
+		c.evictInterval = interval
+	}
 }
 
 func (c *InMemCache) Set(key string, value []byte, ttl time.Duration) {
@@ -84,9 +96,7 @@ func (c *InMemCache) Delete(key string) {
 }
 
 func (c *InMemCache) Stop() {
-	if atomic.CompareAndSwapInt32(&c.stopped, 0, 1) {
-		close(c.stopCh)
-	}
+	close(c.stopCh)
 }
 
 func (c *InMemCache) startCleanupLoop(interval time.Duration) {

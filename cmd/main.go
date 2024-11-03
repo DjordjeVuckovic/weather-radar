@@ -5,6 +5,7 @@ import (
 	"github.com/DjordjeVuckovic/weather-radar/internal/client"
 	"github.com/DjordjeVuckovic/weather-radar/internal/config"
 	"github.com/DjordjeVuckovic/weather-radar/internal/service"
+	"github.com/DjordjeVuckovic/weather-radar/internal/storage"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/cache"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/logger"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/middleware"
@@ -47,7 +48,8 @@ func main() {
 		Username: cfg.BasicAuthUsername,
 		Password: cfg.BasicAuthPassword,
 	})
-	wService := service.NewWeatherService(wCl, astroCl)
+	st := storage.NewWeatherInMemStorage()
+	wService := service.NewWeatherService(wCl, astroCl, st)
 
 	api.BindWeatherApi(s, wService, authService, c)
 

@@ -160,33 +160,37 @@ func (s *Server) wrapMiddleware(h HandlerFunc, mw ...MiddlewareFunc) http.Handle
 func handleError(h HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := h(w, r)
+		if err == nil {
+			return
+		}
+
 		var problem *result.Err
 		ok := errors.As(err, &problem)
 		if !ok {
-			if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
 				_ = resp.WriteProblemJSON(
 					w,
 					result.NewErr(
-						http.StatusInternalServerError,
-						err.Error(),
+						http.StatusGatewayTimeout,
+						"Request timeout",
 					),
 				)
+				return
 			}
+			_ = resp.WriteProblemJSON(
+				w,
+				result.NewErr(
+					http.StatusInternalServerError,
+					err.Error(),
+				),
+			)
 			return
 		}
 		if problem != nil {
-			switch problem.Status {
-			case http.StatusNotFound:
-				_ = resp.WriteProblemJSON(w, problem)
-			case http.StatusBadRequest:
-				_ = resp.WriteProblemJSON(w, problem)
-			case http.StatusConflict:
-				_ = resp.WriteProblemJSON(w, problem)
-			case http.StatusUnauthorized:
-				_ = resp.WriteProblemJSON(w, problem)
-			default:
-				_ = resp.WriteProblemJSON(w, problem)
-			}
+			_ = resp.WriteProblemJSON(w, problem)
+			return
 		}
+
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
