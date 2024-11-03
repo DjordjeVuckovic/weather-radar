@@ -72,7 +72,7 @@ func TestFixedWindowLimiter(t *testing.T) {
 	})
 }
 
-func newTestFwLimiterHandler(time time.Duration, maxReq int) server.HandlerFunc {
+func newTestFwLimiterHandler(time time.Duration, maxReq int32) server.HandlerFunc {
 	limiter := NewFixedWindowLimiter(FixedWindowLimiterConfig{
 		Window:      time,
 		MaxRequests: maxReq,

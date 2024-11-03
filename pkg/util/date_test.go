@@ -5,7 +5,7 @@ import "testing"
 // Offset for UTC+1 (CET)
 func TestUnixToLocal_CET(t *testing.T) {
 	unixTimestamp := int64(1733054400)
-	timeOffset := int16(3600)
+	timeOffset := 3600
 
 	expectedTime := "2024-12-01 13:00"
 
