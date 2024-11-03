@@ -1,0 +1,177 @@
+definitions:
+  dto.WeatherFeedbackReq:
+    properties:
+      Message:
+        type: string
+      city:
+        type: string
+      date:
+        type: string
+    type: object
+  dto.WeatherFeedbackResp:
+    properties:
+      message:
+        type: string
+    type: object
+  model.Astro:
+    properties:
+      sunrise:
+        type: string
+      sunset:
+        type: string
+    type: object
+  model.Current:
+    properties:
+      cloud:
+        type: integer
+      condition:
+        type: string
+      feelslike_c:
+        type: number
+      heatindex_c:
+        type: number
+      humidity:
+        type: integer
+      last_updated:
+        type: string
+      precip_mm:
+        type: integer
+      pressure_mb:
+        type: integer
+      temp_c:
+        type: number
+      uv:
+        type: integer
+      vis_km:
+        type: integer
+      wind_degree:
+        type: integer
+      wind_dir:
+        type: string
+      wind_kph:
+        type: number
+    type: object
+  model.Location:
+    properties:
+      country:
+        type: string
+      lat:
+        type: number
+      localtime:
+        type: string
+      lon:
+        type: number
+      name:
+        type: string
+      region:
+        type: string
+      tz_id:
+        type: string
+      tz_offset:
+        type: integer
+    type: object
+  model.Weather:
+    properties:
+      astro:
+        $ref: '#/definitions/model.Astro'
+      current:
+        $ref: '#/definitions/model.Current'
+      location:
+        $ref: '#/definitions/model.Location'
+    type: object
+  result.Err:
+    properties:
+      code:
+        type: integer
+      detail:
+        type: string
+      title:
+        $ref: '#/definitions/result.ErrTitle'
+      type:
+        type: string
+    type: object
+  result.ErrTitle:
+    enum:
+    - Validation problem
+    - Not Found
+    - Conflict
+    - Unauthorized
+    - Request Timeout
+    type: string
+    x-enum-varnames:
+    - Validation
+    - NotFound
+    - Conflict
+    - UnAuthorized
+    - GatewayTimeout
+info:
+  contact: {}
+paths:
+  /api/v1/weather:
+    get:
+      description: Get weather data for a specific city.
+      parameters:
+      - description: City name
+        in: query
+        name: city
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Weather'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/result.Err'
+        "404":
+          description: City not found
+          schema:
+            $ref: '#/definitions/result.Err'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/result.Err'
+        "504":
+          description: Request Timeout
+          schema:
+            $ref: '#/definitions/result.Err'
+      summary: Get weather by city
+      tags:
+      - weather
+  /v1/weather/feedback:
+    post:
+      consumes:
+      - application/json
+      description: Submit feedback about the weather in a specific city.
+      parameters:
+      - description: Weather feedback
+        in: body
+        name: feedback
+        required: true
+        schema:
+          $ref: '#/definitions/dto.WeatherFeedbackReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.WeatherFeedbackResp'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/result.Err'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/result.Err'
+      security:
+      - BasicAuth: []
+      summary: Submit weather feedback
+      tags:
+      - weather
+swagger: "2.0"

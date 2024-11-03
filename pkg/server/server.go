@@ -3,8 +3,10 @@ package server
 import (
 	"context"
 	"errors"
+	"github.com/DjordjeVuckovic/weather-radar/docs"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/resp"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/result"
+	"github.com/swaggo/http-swagger"
 	"log/slog"
 	"net/http"
 	"os"
@@ -35,10 +37,14 @@ func NewServer(listenAddr string, opts ...Option) *Server {
 		mux:                     http.NewServeMux(),
 		gracefulShutdownTimeout: defaultGracefulShutdownTimeout,
 	}
+
 	for _, opt := range opts {
 		opt(server)
 	}
+
 	server.setupHealthCheck()
+	server.setupSwagger()
+
 	return server
 }
 
@@ -133,7 +139,7 @@ func (s *Server) wrapMiddleware(h HandlerFunc, mw ...MiddlewareFunc) http.Handle
 
 func (s *Server) SetupNotFoundHandler() {
 	s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		slog.Error("Route not found", "path", r.URL.Path)
+		slog.Warn("Route not found", "path", r.URL.Path)
 		http.NotFound(w, r)
 	})
 }
@@ -154,6 +160,13 @@ func (s *Server) setupHealthCheck() {
 		}
 		return nil
 	})
+}
+
+func (s *Server) setupSwagger() {
+	docs.SwaggerInfo.Title = "Weather Radar"
+	docs.SwaggerInfo.Description = "Weather Radar API"
+	docs.SwaggerInfo.Version = "1.0"
+	s.mux.Handle("/swagger-ui/", httpSwagger.WrapHandler)
 }
 
 func (s *Server) shutdown(ctx context.Context) error {

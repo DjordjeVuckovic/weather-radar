@@ -45,7 +45,9 @@ func InitSlog(config Config) {
 			Level: level,
 		})
 	default:
-		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{})
+		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: level,
+		})
 	}
 	logg := slog.New(handler)
 	slog.SetDefault(logg)

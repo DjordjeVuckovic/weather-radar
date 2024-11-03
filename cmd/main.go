@@ -1,9 +1,11 @@
 package main
 
 import (
-	api2 "github.com/DjordjeVuckovic/weather-radar/api"
+	"github.com/DjordjeVuckovic/weather-radar/api"
+	"github.com/DjordjeVuckovic/weather-radar/internal/cache"
 	"github.com/DjordjeVuckovic/weather-radar/internal/client"
 	"github.com/DjordjeVuckovic/weather-radar/internal/config"
+	"github.com/DjordjeVuckovic/weather-radar/internal/service"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/logger"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/middleware"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/server"
@@ -12,10 +14,10 @@ import (
 )
 
 func main() {
-	cgf := config.Load()
+	cfg := config.Load()
 
 	logger.InitSlog(logger.Config{
-		Level:   logger.InfoLevel,
+		Level:   logger.DebugLevel,
 		Handler: logger.Text,
 	})
 
@@ -24,17 +26,25 @@ func main() {
 
 	s.Use(middleware.Logger())
 	s.Use(middleware.Recover())
-	s.Use(middleware.CORS(middleware.Config{Origin: cgf.CorsOrigins}))
+	s.Use(middleware.CORS(middleware.Config{Origin: cfg.CorsOrigins}))
+
+	c := cache.NewInMemCache(5*time.Minute, cache.EvictLRU)
 
 	wCl := client.NewWeatherAPIClient(
-		cgf.WeatherUrl,
-		cgf.WeatherApiKey,
+		cfg.WeatherUrl,
+		cfg.WeatherApiKey,
 	)
 	astroCl := client.NewAstroAPIClient(
-		cgf.OpenWeatherUrl,
-		cgf.OpenWeatherApiKey,
+		cfg.OpenWeatherUrl,
+		cfg.OpenWeatherApiKey,
 	)
-	api2.BindWeatherApi(s, wCl, astroCl)
+	authService := service.NewAuthService(service.AuthCredentials{
+		Username: cfg.BasicAuthUsername,
+		Password: cfg.BasicAuthPassword,
+	})
+
+	wService := service.NewWeatherService(wCl, astroCl)
+	api.BindWeatherApi(s, wService, authService, c)
 
 	s.SetupNotFoundHandler()
 

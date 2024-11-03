@@ -10,12 +10,17 @@ import (
 )
 
 type Env struct {
-	ENV               string
-	CorsOrigins       string
-	WeatherUrl        string
-	WeatherApiKey     string
+	ENV         string
+	CorsOrigins string
+
+	WeatherUrl    string
+	WeatherApiKey string
+
 	OpenWeatherUrl    string
 	OpenWeatherApiKey string
+
+	BasicAuthUsername string
+	BasicAuthPassword string
 }
 
 func Load() Env {
@@ -32,7 +37,6 @@ func Load() Env {
 	if wUrl == "" {
 		panic("WEATHER_API_URL is required")
 	}
-
 	wApiKey := os.Getenv("WEATHER_API_KEY")
 	if wApiKey == "" {
 		panic("WEATHER_API_KEY is required")
@@ -42,10 +46,18 @@ func Load() Env {
 	if owUrl == "" {
 		panic("OPEN_WEATHER_API_URL is required")
 	}
-
 	owApiKey := os.Getenv("OPEN_WEATHER_API_KEY")
 	if owApiKey == "" {
 		panic("OPEN_WEATHER_API_KEY is required")
+	}
+
+	basicAuthUsername := os.Getenv("BASIC_AUTH_USERNAME")
+	if basicAuthUsername == "" {
+		panic("BASIC_AUTH_USERNAME is required")
+	}
+	basicAuthPassword := os.Getenv("BASIC_AUTH_PASSWORD")
+	if basicAuthPassword == "" {
+		panic("BASIC_AUTH_PASSWORD is required")
 	}
 
 	return Env{

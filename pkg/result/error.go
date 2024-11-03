@@ -7,10 +7,11 @@ import (
 type ErrTitle string
 
 const (
-	Validation   ErrTitle = "Validation problem"
-	NotFound     ErrTitle = "Not Found"
-	Conflict     ErrTitle = "Conflict"
-	UnAuthorized ErrTitle = "Unauthorized"
+	Validation     ErrTitle = "Validation problem"
+	NotFound       ErrTitle = "Not Found"
+	Conflict       ErrTitle = "Conflict"
+	UnAuthorized   ErrTitle = "Unauthorized"
+	GatewayTimeout ErrTitle = "Request Timeout"
 )
 
 type Err struct {
@@ -43,6 +44,9 @@ func getErrTitle(code int) ErrTitle {
 		return NotFound
 	case http.StatusConflict:
 		return Conflict
+	case http.StatusGatewayTimeout:
+		return GatewayTimeout
+
 	}
 	return "Internal Server Error"
 }
@@ -71,4 +75,12 @@ func NotFoundErr(detail string) *Err {
 
 func InternalServerErr(detail string) *Err {
 	return NewErr(http.StatusInternalServerError, detail)
+}
+
+func TimeoutErr() *Err {
+	return NewErr(http.StatusGatewayTimeout, "request timeout")
+}
+
+func UnauthorizedErr(detail string) error {
+	return NewErr(http.StatusUnauthorized, detail)
 }

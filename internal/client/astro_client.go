@@ -40,7 +40,7 @@ func (api *AstroAPIClient) GetByCity(ctx context.Context, city string) (*dto.Ast
 	if err != nil {
 		var apiErr AstroApiErr
 		ok := errors.As(err, &apiErr)
-		if ok && apiErr.Cod == 404 {
+		if ok && (apiErr.Cod == 0 || apiErr.Cod == 404) {
 			return nil, result.NotFoundErr(apiErr.Error())
 		}
 		return nil, result.InternalServerErr("Failed to fetch astronomy data: " + err.Error())
