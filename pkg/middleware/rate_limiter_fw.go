@@ -9,12 +9,12 @@ import (
 
 type FixedWindowLimiterConfig struct {
 	Window      time.Duration
-	MaxRequests int
+	MaxRequests int32
 }
 
 type FixedWindowLimiter struct {
 	window      time.Duration
-	maxRequests int
+	maxRequests int32
 	clients     sync.Map
 }
 
@@ -45,8 +45,8 @@ func (fw *FixedWindowLimiter) AddAndCheckLimit(r *http.Request) (Limit, error) {
 	}
 
 	requestCount := atomic.LoadInt32(&client.requestCount)
-	limitExceeded := requestCount > int32(fw.maxRequests)
-	remaining := fw.maxRequests - int(requestCount)
+	limitExceeded := requestCount > fw.maxRequests
+	remaining := fw.maxRequests - requestCount
 
 	if remaining < 0 {
 		remaining = 0
@@ -54,8 +54,8 @@ func (fw *FixedWindowLimiter) AddAndCheckLimit(r *http.Request) (Limit, error) {
 	resetTime := time.Unix(0, client.windowStart.Load()).Add(fw.window)
 	return Limit{
 		Exceeded:  limitExceeded,
-		Limit:     fw.maxRequests,
-		Remaining: remaining,
+		Limit:     int(fw.maxRequests),
+		Remaining: int(remaining),
 		Reset:     resetTime,
 	}, nil
 }

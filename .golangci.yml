@@ -4,7 +4,7 @@ linters:
     - errcheck
     - gofmt
     - goimports
-    - golint
+    - revive
     - gosec
   disable:
     - unused
@@ -21,3 +21,6 @@ linters-settings:
     check-blank: false
   gofmt:
     simplify: false
+  revive:
+    severity: error
+    enable-all-rules: false

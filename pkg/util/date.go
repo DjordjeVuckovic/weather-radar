@@ -8,7 +8,7 @@ func UnixToUTC(unix int64) string {
 	return time.Unix(unix, 0).UTC().Format(time.RFC3339)
 }
 
-func UnixToLocal(unix int64, tzOffset int16) string {
+func UnixToLocal(unix int64, tzOffset int) string {
 	t := time.Unix(unix, 0).UTC()
 
 	localTime := t.Add(time.Duration(tzOffset) * time.Second)

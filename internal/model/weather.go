@@ -13,7 +13,7 @@ type Location struct {
 	Lon       float64 `json:"lon"`
 	TzId      string  `json:"tz_id"`
 	Localtime string  `json:"localtime"`
-	TzOffset  int16   `json:"tz_offset"`
+	TzOffset  int     `json:"tz_offset"`
 }
 
 type Current struct {
@@ -52,7 +52,7 @@ func NewWeatherFromDto(weatherDto *dto.WeatherByCity, astroDto *dto.AstroByCity)
 		Lon:       weatherDto.Location.Lon,
 		TzId:      weatherDto.Location.TzId,
 		Localtime: weatherDto.Location.Localtime,
-		TzOffset:  int16(astroDto.Timezone),
+		TzOffset:  astroDto.Timezone,
 	}
 
 	current := Current{
@@ -72,8 +72,8 @@ func NewWeatherFromDto(weatherDto *dto.WeatherByCity, astroDto *dto.AstroByCity)
 		Uv:          int(weatherDto.Current.Uv),
 	}
 
-	sunrise := util.UnixToLocal(int64(astroDto.Sys.Sunrise), int16(astroDto.Timezone))
-	sunset := util.UnixToLocal(int64(astroDto.Sys.Sunset), int16(astroDto.Timezone))
+	sunrise := util.UnixToLocal(int64(astroDto.Sys.Sunrise), astroDto.Timezone)
+	sunset := util.UnixToLocal(int64(astroDto.Sys.Sunset), astroDto.Timezone)
 
 	astroData := Astro{
 		Sunrise: sunrise,
