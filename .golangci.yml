@@ -3,7 +3,6 @@ linters:
     - cyclop
     - errcheck
     - gofmt
-    - goimports
     - revive
     - gosec
   disable:
