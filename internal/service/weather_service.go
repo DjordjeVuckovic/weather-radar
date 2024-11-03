@@ -71,13 +71,6 @@ func (w *WeatherService) GetWeatherByCity(ctx context.Context, city string) (*mo
 }
 
 func (w *WeatherService) SubmitFeedback(feedback dto.WeatherFeedbackReq) error {
-	//TODO
+	//TODO: Submit feedback to the database
 	return nil
 }
-
-//TODO func (w *WeatherService) WeatherByCites(ctx context.Context, cities []string) {
-//	weatherCh := make(chan *dto.WeatherByCity, len(cities))
-//astroCh := make(chan *dto.AstroByCity, len(cities))
-//errCh := make(chan error, len(cities))
-//
-//}

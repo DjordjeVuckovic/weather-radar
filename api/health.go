@@ -19,7 +19,7 @@ func SetupHealthCheck(s *server.Server) {
 // @Produce json
 // @Success 200 {string} string "OK"
 // @Router /healthz [get]
-func handleHealthChecks(w http.ResponseWriter, r *http.Request) error {
+func handleHealthChecks(w http.ResponseWriter, _ *http.Request) error {
 	err := resp.WriteJSON(w, http.StatusOK, "OK")
 	if err != nil {
 		return err
@@ -33,7 +33,7 @@ func handleHealthChecks(w http.ResponseWriter, r *http.Request) error {
 // @Produce json
 // @Success 200 {string} string "OK"
 // @Router /ready [get]
-func handleReadinessChecks(w http.ResponseWriter, r *http.Request) error {
+func handleReadinessChecks(w http.ResponseWriter, _ *http.Request) error {
 	err := resp.WriteJSON(w, http.StatusOK, "OK")
 	if err != nil {
 		return err
