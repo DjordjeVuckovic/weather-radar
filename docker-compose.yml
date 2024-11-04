@@ -1,0 +1,18 @@
+services:
+  weather-service:
+    image: weather-service:1.0.0
+    container_name: weather-service
+    build:
+      context: .
+    ports:
+      - "1312:80"
+    environment:
+      ENV: dev
+      PORT: 80
+      CORS_ORIGINS: http://localhost:3000
+      WEATHER_API_URL: https://api.weatherapi.com/v1
+      WEATHER_API_KEY:
+      OPEN_WEATHER_API_URL: https://api.openweathermap.org
+      OPEN_WEATHER_API_KEY:
+      BASIC_AUTH_USERNAME: admin
+      BASIC_AUTH_PASSWORD: admin

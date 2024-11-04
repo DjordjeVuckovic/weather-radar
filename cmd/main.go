@@ -1,9 +1,12 @@
 package main
 
 import (
-	api2 "github.com/DjordjeVuckovic/weather-radar/api"
+	"github.com/DjordjeVuckovic/weather-radar/api"
 	"github.com/DjordjeVuckovic/weather-radar/internal/client"
 	"github.com/DjordjeVuckovic/weather-radar/internal/config"
+	"github.com/DjordjeVuckovic/weather-radar/internal/service"
+	"github.com/DjordjeVuckovic/weather-radar/internal/storage"
+	"github.com/DjordjeVuckovic/weather-radar/pkg/cache"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/logger"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/middleware"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/server"
@@ -12,25 +15,51 @@ import (
 )
 
 func main() {
-	cgf := config.Load()
+	cfg := config.Load()
 
 	logger.InitSlog(logger.Config{
 		Level:   logger.InfoLevel,
 		Handler: logger.Text,
 	})
 
+	c := cache.NewInMemCache(5*time.Second, cache.EvictLRU)
+
 	gst := server.WithGracefulShutdownTimeout(5 * time.Second)
-	s := server.NewServer(":1312", gst)
+	s := server.NewServer(":"+cfg.Port, gst)
+
+	if cfg.ENV == "dev" {
+		s.SetupSwagger()
+	}
+	api.SetupHealthCheck(s)
 
 	s.Use(middleware.Logger())
 	s.Use(middleware.Recover())
-	s.Use(middleware.CORS(middleware.Config{Origin: cgf.CorsOrigins}))
-	s.Use(middleware.Example())
+	s.Use(middleware.CORS(middleware.CORSConfig{Origin: cfg.CorsOrigins}))
 
-	wCl := client.NewAPIWeatherClient(cgf.WeatherApiKey, cgf.WeatherUrl)
-	api2.BindWeatherApi(s, wCl)
+	wCl := client.NewWeatherAPIClient(
+		cfg.WeatherUrl,
+		cfg.WeatherApiKey,
+	)
+	astroCl := client.NewAstroAPIClient(
+		cfg.OpenWeatherUrl,
+		cfg.OpenWeatherApiKey,
+	)
+	authService := service.NewAuthService(service.AuthCredentials{
+		Username: cfg.BasicAuthUsername,
+		Password: cfg.BasicAuthPassword,
+	})
+	st := storage.NewWeatherInMemStorage()
+	wService := service.NewWeatherService(wCl, astroCl, st)
+
+	api.BindWeatherApi(s, wService, authService, c)
 
 	s.SetupNotFoundHandler()
+
+	go func() {
+		<-s.ShutdownSig
+		slog.Info("Shutdown started, cleaning up resources...")
+		c.Stop()
+	}()
 
 	if err := s.Start(); err != nil {
 		slog.Error(err.Error())

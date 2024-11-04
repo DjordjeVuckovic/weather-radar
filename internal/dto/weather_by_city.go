@@ -45,15 +45,5 @@ type WeatherByCity struct {
 		Uv         float64 `json:"uv"`
 		GustMph    float64 `json:"gust_mph"`
 		GustKph    float64 `json:"gust_kph"`
-		AirQuality struct {
-			Co           float64 `json:"co"`
-			No2          float64 `json:"no2"`
-			O3           float64 `json:"o3"`
-			So2          float64 `json:"so2"`
-			Pm25         float64 `json:"pm2_5"`
-			Pm10         float64 `json:"pm10"`
-			UsEpaIndex   int     `json:"us-epa-index"`
-			GbDefraIndex int     `json:"gb-defra-index"`
-		} `json:"air_quality"`
 	} `json:"current"`
 }

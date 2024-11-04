@@ -1,0 +1,19 @@
+# GET request to fetch weather data
+@BASE_URL = http://localhost:1312
+@BASE64_ENCODED_AUTH = YWRtaW46YWRtaW4=
+
+GET {{BASE_URL}}/api/v1/weather?city=Belgrade
+Accept: application/json
+
+###
+
+# POST request to submit weather feedback
+POST {{BASE_URL}}/api/v1/weather/feedback
+Authorization: Basic {{BASE64_ENCODED_AUTH}}
+Content-Type: application/json
+
+{
+  "date": "2024-10-27",
+  "city": "Belgrade",
+  "message": "It was raining all day long."
+}
