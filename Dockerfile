@@ -3,13 +3,12 @@ ARG DISTROLESS_IMAGE=gcr.io/distroless/base-debian12
 FROM ${GO_IMAGE} AS builder
 
 WORKDIR /app
-COPY go.mod .
+COPY go.mod go.sum ./ ./
 RUN go mod download
 
 COPY . .
 
-WORKDIR /app/cmd
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app/weather-radar main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/weather-radar ./cmd/main.go
 
 FROM ${DISTROLESS_IMAGE} AS publisher
 
