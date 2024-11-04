@@ -37,6 +37,7 @@ func RateLimit(limiter Limiter) server.MiddlewareFunc {
 
 			if limit.Exceeded {
 				http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+				return nil
 			}
 
 			return next(w, r)
