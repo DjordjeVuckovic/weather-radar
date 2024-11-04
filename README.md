@@ -47,11 +47,10 @@
     ```
 ### Run with Docker
 1. Change following env vars in docker-compose.yml file:
- ```text
- WEATHER_API_KEY=your_api_key
- OPEN_WEATHER_API_KEY=your_api_key
- ```
-
+     ```text
+     WEATHER_API_KEY=your_api_key
+     OPEN_WEATHER_API_KEY=your_api_key
+     ```
 2. Run docker-compose:
     ```bash
     docker compose up -d
@@ -77,5 +76,5 @@
     ```bash
     swag init -g cmd/main.go
     ```
-- The Swagger documentation will be available at `http://localhost:1312/swagger/index.html`.
+- The Swagger documentation will be available at `http://localhost:1312/swagger-ui/index.html`.
 

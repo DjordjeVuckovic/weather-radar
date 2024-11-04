@@ -148,10 +148,10 @@ func (s *Server) handle(method, route string, h HandlerFunc, mw ...MiddlewareFun
 }
 
 func (s *Server) wrapMiddleware(h HandlerFunc, mw ...MiddlewareFunc) http.HandlerFunc {
-	mws := append(s.middleware, mw...)
+	mw = append(s.middleware, mw...)
 
-	for i := len(mws) - 1; i >= 0; i-- {
-		h = mws[i](h)
+	for i := len(mw) - 1; i >= 0; i-- {
+		h = mw[i](h)
 	}
 
 	return handleError(h)
