@@ -12,6 +12,7 @@ import (
 	"github.com/DjordjeVuckovic/weather-radar/pkg/server"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -43,7 +44,8 @@ func BindWeatherApi(
 		MaxRequests: 10,
 	})
 	s.GET("/api/v1/weather", api.handleWeatherByCity, middleware.RateLimit(limiter))
-	s.POST("api/v1/weather/feedback", api.handleWeatherFeedback)
+	s.POST("/api/v1/weather/feedback", api.handleWeatherFeedback)
+	s.GET("/api/v1/weather/stream", api.handleWeatherStream, middleware.HTTPStreaming())
 }
 
 // handleWeatherByCity retrieves weather information for a specified city.
@@ -114,6 +116,80 @@ func (api *WeatherApi) handleWeatherFeedback(w http.ResponseWriter, r *http.Requ
 		Message: "Feedback submitted successfully",
 	}
 	return resp.WriteJSON(w, http.StatusOK, response)
+}
+
+// handleWeatherStream retrieves streamed weather information for a specified cities.
+// @Summary Get weather by city
+// @Description Get weather data for a specific city.
+// @Tags weather
+// @Produce json
+// @Success 200 {object} service.AggregatedWeather
+// @Failure 400 {object} result.Err "Validation error"
+// @Failure 404 {object} result.Err "City not found"
+// @Failure 500 {object} result.Err "Internal server error"
+// @Failure 504 {object} result.Err "Request Timeout"
+// @Router /api/v1/weather/stream [get]
+func (api *WeatherApi) handleWeatherStream(w http.ResponseWriter, r *http.Request) error {
+	citiesQueryParam := r.URL.Query().Get("cities")
+	if citiesQueryParam == "" {
+		return result.ValidationErr("Cities query param is required")
+	}
+
+	cities := strings.Split(citiesQueryParam, ",")
+	if len(cities) == 0 {
+		return result.ValidationErr("Cities query param is not valid")
+	}
+
+	flusher, _ := r.Context().Value(middleware.CtxFlusherKey).(http.Flusher)
+
+	resultCh, errCh := api.weatherService.GetWeatherStreamByCities(r.Context(), cities)
+	_, err := w.Write([]byte("["))
+	if err != nil {
+		return err
+	} // Start of JSON array
+
+	first := true
+	for {
+		select {
+		case weather, ok := <-resultCh:
+			if !ok {
+				_, err := w.Write([]byte("]"))
+				if err != nil {
+					return err
+				}
+				return nil
+			}
+
+			if !first {
+				_, err := w.Write([]byte(","))
+				if err != nil {
+					return err
+				}
+			} else {
+				first = false
+			}
+
+			data, err := json.Marshal(weather)
+			if err != nil {
+				http.Error(w, "Failed to encode data", http.StatusInternalServerError)
+				return nil
+			}
+
+			_, err = w.Write(data)
+			if err != nil {
+				return err
+			}
+			flusher.Flush() // Send the chunk immediately to the client
+
+		case err := <-errCh:
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return nil
+
+		case <-r.Context().Done():
+			http.Error(w, "Request canceled", http.StatusGatewayTimeout)
+			return nil
+		}
+	}
 }
 
 func (api *WeatherApi) getWeatherFromCache(city string) (*model.Weather, bool) {
