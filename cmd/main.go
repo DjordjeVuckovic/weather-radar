@@ -33,9 +33,9 @@ func main() {
 	}
 	api.SetupHealthCheck(s)
 
+	s.Use(middleware.Recover())
 	s.Use(middleware.Logger())
 	s.Use(middleware.CORS(middleware.CORSConfig{Origin: cfg.CorsOrigins}))
-	s.Use(middleware.Recover())
 
 	wCl := client.NewWeatherAPIClient(
 		cfg.WeatherUrl,
