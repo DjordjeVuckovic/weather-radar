@@ -2,8 +2,9 @@ package client
 
 import (
 	"context"
-	"github.com/DjordjeVuckovic/weather-radar/internal/dto"
 	"time"
+
+	"github.com/DjordjeVuckovic/weather-radar/internal/dto"
 )
 
 type MockWeatherClient struct {

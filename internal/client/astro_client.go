@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/DjordjeVuckovic/weather-radar/internal/dto"
-	"github.com/DjordjeVuckovic/weather-radar/pkg/result"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/DjordjeVuckovic/weather-radar/internal/dto"
+	"github.com/DjordjeVuckovic/weather-radar/pkg/result"
 )
 
 type AstroClient interface {

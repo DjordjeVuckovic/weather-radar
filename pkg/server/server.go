@@ -3,15 +3,16 @@ package server
 import (
 	"context"
 	"errors"
-	"github.com/DjordjeVuckovic/weather-radar/docs"
-	"github.com/DjordjeVuckovic/weather-radar/pkg/resp"
-	"github.com/DjordjeVuckovic/weather-radar/pkg/result"
-	httpSwagger "github.com/swaggo/http-swagger"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/DjordjeVuckovic/weather-radar/docs"
+	"github.com/DjordjeVuckovic/weather-radar/pkg/resp"
+	"github.com/DjordjeVuckovic/weather-radar/pkg/result"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type Server struct {

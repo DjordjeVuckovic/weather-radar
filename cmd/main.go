@@ -1,6 +1,9 @@
 package main
 
 import (
+	"log/slog"
+	"time"
+
 	"github.com/DjordjeVuckovic/weather-radar/api"
 	"github.com/DjordjeVuckovic/weather-radar/internal/client"
 	"github.com/DjordjeVuckovic/weather-radar/internal/config"
@@ -10,8 +13,6 @@ import (
 	"github.com/DjordjeVuckovic/weather-radar/pkg/logger"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/middleware"
 	"github.com/DjordjeVuckovic/weather-radar/pkg/server"
-	"log/slog"
-	"time"
 )
 
 func main() {
@@ -33,8 +34,8 @@ func main() {
 	api.SetupHealthCheck(s)
 
 	s.Use(middleware.Logger())
-	s.Use(middleware.Recover())
 	s.Use(middleware.CORS(middleware.CORSConfig{Origin: cfg.CorsOrigins}))
+	s.Use(middleware.Recover())
 
 	wCl := client.NewWeatherAPIClient(
 		cfg.WeatherUrl,
